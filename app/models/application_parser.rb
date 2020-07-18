@@ -13,16 +13,46 @@ module ApplicationParser
 
   def read_json!
     @state = @json_application["State"]
-    if @json_application["Application Year"]
-      unless MedicaidEligibilityApi::Application.options[:state_config][:default][:FPL].keys.include?(@json_application["Application Year"].to_s)
-        raise "Invalid application year"
+
+    # TODO: extract application date/year calculation/validation logic into separate unit tested fn
+    if @json_application["Application Date"]
+      @application_date = Date.parse(@json_application["Application Date"])
+      @application_year = @json_application["Application Year"] && @json_application["Application Year"].to_i
+    elsif @json_application["Application Year"]
+      @application_year = @json_application["Application Year"].to_i
+      # If year is provided, but not explicit date, let's pick today's date if it's consistent
+      # with the year. Otherwise, let's pick the first consistent date.
+
+      todays_date = Date.today
+      if Date.new(@application_year, 4, 1) >= todays_date && todays_date < Date.new(@application_year + 1, 4, 1)
+        @application_date = todays_date
+      else
+        @application_date = Date.new(@application_year, 4, 1)
       end
-      @application_year = @json_application["Application Year"]
-    elsif Date.today >= Date.new(Date.today.year, 4, 1)
-      @application_year = Date.today.year
     else
-      @application_year = Date.today.year - 1
+      @application_date = Date.today
+      @application_year = nil
     end
+
+    if @application_date >= Date.new(@application_date.year, 4, 1)
+      @calculated_application_year = @application_date.year
+    else
+      @calculated_application_year = @application_date.year - 1
+      end
+
+    # Validate that the application year is consistent with the application date
+    if @application_year
+      if @application_year != @calculated_application_year
+        raise "Application year is not consistent with application date"
+      end
+    else
+      @application_year = @calculated_application_year
+    end
+
+    unless MedicaidEligibilityApi::Application.options[:state_config][:default][:FPL].keys.include?(@application_year.to_s)
+      raise "Invalid application year"
+    end
+
     @people = []
     @applicants = []
     for json_person in @json_application["People"]

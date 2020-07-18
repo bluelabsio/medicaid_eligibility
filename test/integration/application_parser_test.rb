@@ -60,10 +60,12 @@ class ApplicationParserTest < ActionDispatch::IntegrationTest
       # make sure app year works
       assert_equal @application_year, @json_application['Application Year']
 
-      # should set year to 2013
+      # should set year to 2013 (skip if app date is fixed)
+      unless @json_application['Application Date']
       @json_application['Application Year'] = 2013
       read_json!
       assert_equal @application_year, 2013
+      end
 
       # should throw an error when you give it a bad year
       # WARNING: If you stop it after this, it doesn't reload well for some reason
