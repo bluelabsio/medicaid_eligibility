@@ -1,6 +1,6 @@
 module ApplicationParser
   include ApplicationComponents
-  
+
   def read_configs!
     config = MedicaidEligibilityApi::Application.options[:state_config]
     if config[@state]
@@ -38,7 +38,7 @@ module ApplicationParser
       @calculated_application_year = @application_date.year
     else
       @calculated_application_year = @application_date.year - 1
-      end
+    end
 
     # Validate that the application year is consistent with the application date
     if @application_year
@@ -65,7 +65,7 @@ module ApplicationParser
       applicant_id = json_person["Applicant ID"]
       applicant_attributes = {}
       is_applicant = json_person["Is Applicant"] == 'Y'
-      
+
       for input in ApplicationVariables::PERSON_INPUTS
         if [:relationship, :special].include? input[:group]
           next
@@ -109,7 +109,7 @@ module ApplicationParser
 
       for relationship in relationships
         other_id = relationship["Other ID"]
-        
+
         other_person = @people.find{|p| p.person_id == other_id}
         relationship_type = ApplicationVariables::RELATIONSHIP_INVERSE[ApplicationVariables::RELATIONSHIP_CODES[relationship["Relationship Code"]]]
         relationship_attributes = {}
@@ -130,7 +130,7 @@ module ApplicationParser
       filers = json_return["Filers"].map{|jf|
         @people.find{|p| p.person_id == jf["Person ID"]}
       }
-      
+
       dependents = json_return["Dependents"].map{|jd|
         @people.find{|p| p.person_id == jd["Person ID"]}
       }
@@ -153,7 +153,7 @@ module ApplicationParser
 
   def get_json_income(json_income)
     income_fields = ApplicationVariables::INCOME_INPUTS
-    income = {incomes: {}, deductions: {}}
+    income = {incomes: {}, deductions: {}, qualified_winnings: []}
 
     if json_income
       for income_field in income_fields[:incomes]
@@ -166,6 +166,10 @@ module ApplicationParser
 
       for income_field in income_fields[:deductions]
         income[:deductions][income_field] = get_json_income_field(json_income[income_field], income_field, :positive)
+      end
+
+      if json_income['Qualified Winnings']
+        income[:qualified_winnings] = get_qualified_winnings(json_income['Qualified Winnings'])
       end
     end
 
@@ -180,12 +184,21 @@ module ApplicationParser
     amount.to_i
   end
 
+  def get_qualified_winnings(json_winnings)
+    json_winnings.map do |json_winning|
+      {
+        amount: get_json_income_field(json_winning['Amount'], 'Qualified Winning Amount', :positive),
+        date: Date.parse(json_winning['Date'])
+      }
+    end
+  end
+
   def get_variable(value, input, attributes)
     if value.blank?
       if input[:required] || (input[:required_if] && attributes[input[:required_if]] == input[:required_if_value])
         raise "Input missing required variable #{input[:name]}"
       elsif input[:default]
-        if MedicaidEligibilityApi::Application.options[:system_config]["Allow Blank Booleans"] 
+        if MedicaidEligibilityApi::Application.options[:system_config]["Allow Blank Booleans"]
           return input[:default]
         else
           raise "Input missing variable #{input[:name]}"
@@ -206,7 +219,7 @@ module ApplicationParser
         'N'
       else
         raise "Invalid value #{value} for variable #{input[:name]}"
-      end 
+      end
     elsif input[:type] == :string
       value
     elsif input[:type] == :date

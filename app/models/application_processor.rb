@@ -111,7 +111,7 @@ module ApplicationProcessor
     for person in @people
       mh = person.medicaid_household
       mh.income_people = count_income_people(person)
-      mh.income = calculate_household_income(mh.income_people)
+      mh.income = calculate_household_income(person, mh.income_people, @application_date)
     end
   end
 
@@ -231,10 +231,60 @@ module ApplicationProcessor
     return income_people
   end
 
-  def calculate_household_income(income_people)
-    income_people.select{|p| p.income}.map{|p|
-      p.income[:incomes].inject(0){|sum, (name, amt)| sum + amt} -
-      p.income[:deductions].inject(0){|sum, (name, amt)| sum + amt}
+  class WinningsExpander
+    def initialize(amount, date)
+      @amount = amount.to_f
+      @date = date
+      @first_date_of_counting = Date.new(date.year, date.month)
+      @first_date_to_stop_counting = @first_date_of_counting >> self.number_of_months
+    end
+
+    def number_of_months
+      if @amount < 80000
+        1
+      else
+        [2 + (@amount - 80000).divmod(10000)[0], 120].min
+      end
+    end
+
+    def amount_to_apply
+      (@amount / self.number_of_months).round
+    end
+
+    def within_active_range?(evaluation_date)
+      @first_date_of_counting <= evaluation_date && evaluation_date < @first_date_to_stop_counting
+    end
+
+    def winning_counted_at(evaluation_date)
+      if self.within_active_range?(evaluation_date)
+        self.amount_to_apply
+      else
+        0
+      end
+    end
+  end
+
+  def calculate_household_income(person, income_people, relative_date)
+    income_people.select{|p| p.income}.map{|p; base_amount, winnings_adjustment|
+      base_amount = (p.income[:incomes].inject(0){|sum, (_, amt)| sum + amt} -
+        p.income[:deductions].inject(0){|sum, (_, amt)| sum + amt})
+      winnings_adjustment = p.income[:qualified_winnings] ? p.income[:qualified_winnings].inject(0){ |winning_sum, winning|
+        if person == p
+          # We are calculating the household income of the recipient of qualified winnings, so we
+          # have to apply for winnings evenly over a number of months.
+          expander = WinningsExpander.new(winning[:amount], winning[:date])
+          expander.winning_counted_at(relative_date)
+        else
+          # The winnings in question were earned by a DIFFERENT household member, so only
+          # count them in the month they were earned.
+          if winning[:date].year == relative_date.year && winning[:date].month == relative_date.month
+            winning[:amount]
+          else
+            0
+          end
+        end
+      } : 0
+      (base_amount + winnings_adjustment)
     }.sum
   end
 end

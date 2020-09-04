@@ -1,7 +1,7 @@
 {
   "State": "MD",
   "Application Year": 2020,
-  "Application Date": "2020-04-15",
+  "Application Date": "2020-05-15",
   "Name": "Frontend Application",
   "People": [
     {
@@ -73,7 +73,7 @@
       "Person ID": 2,
       "Income": {
         "Monthly Income": 0,
-        "Wages, Salaries, Tips": 20000,
+        "Wages, Salaries, Tips": 0,
         "Taxable Interest": 0,
         "Tax-Exempt Interest": 0,
         "Taxable Refunds, Credits, or Offsets of State and Local Income Taxes": 0,
@@ -85,7 +85,7 @@
         "Other Income": 0,
         "MAGI Deductions": 0,
         "Qualified Winnings": [
-          {"Amount": 12000, "Date": "2020-02-15"}
+          {"Amount": 150000, "Date": "2020-05-01"}
         ]
       },
       "Relationships": [
