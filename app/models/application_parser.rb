@@ -24,7 +24,7 @@ module ApplicationParser
       # with the year. Otherwise, let's pick the first consistent date.
 
       todays_date = Date.today
-      if Date.new(@application_year, 4, 1) >= todays_date && todays_date < Date.new(@application_year + 1, 4, 1)
+      if Date.new(@application_year, 4, 1) <= todays_date && todays_date < Date.new(@application_year + 1, 4, 1)
         @application_date = todays_date
       else
         @application_date = Date.new(@application_year, 4, 1)
