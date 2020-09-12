@@ -4,7 +4,7 @@ module ApplicationResponder
       return JSON.pretty_generate({"Error" => @error.message})
     end
 
-    returned_json = {"Determination Date" => @determination_date, "Applicants" => []}
+    returned_json = {"Determination Date" => @application_date, "Applicants" => []}
 
     for app in @applicants
       app_json = {}

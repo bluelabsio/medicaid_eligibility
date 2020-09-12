@@ -83,7 +83,7 @@ module ApplicationProcessor
       "Tax Returns" => @tax_returns
     }).slice(*(ruleset.class.inputs.keys))
     config = @config.slice(*(ruleset.class.configs.keys))
-    RuleContext.new(config, input, @determination_date)
+    RuleContext.new(config, input, @application_date)
   end
 
   def compute_relationships!

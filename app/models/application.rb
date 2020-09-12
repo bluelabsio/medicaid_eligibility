@@ -14,7 +14,6 @@ class Application
   attr_reader :state, :people, :tax_returns
 
   def initialize(raw_application, content_type)
-    @determination_date = Date.today
     @error = nil
 
     begin
