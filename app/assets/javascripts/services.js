@@ -2,6 +2,10 @@ angular.module('MAGI.services',[]).
     factory('Application', ['$http','$log','relationshipCodes','states','$location', function($http,$log,relationshipCodes,states,$location){
     applicant_ids = 0;
 
+    function dateObjToUiDate(d) {
+      return (d.getMonth()+1).toString().padStart(2, '0') + d.getDate().toString().padStart(2, '0') + d.getFullYear().toString();
+    }
+
     function Application(){
       this.applicants = [];
       this.taxReturns = [];
@@ -17,6 +21,7 @@ angular.module('MAGI.services',[]).
       } else {
         this.applicationYear = today.getFullYear() + 1;
       }
+      this.applicationDate = dateObjToUiDate(today);
       this.determination = {};
       this.households = [[]];
     }
@@ -569,6 +574,7 @@ angular.module('MAGI.services',[]).
       return {
         "State": st,
         "Application Year": this.applicationYear,
+        "Application Date": uiDateToApiDate(this.applicationDate),
         "Name": "Frontend Application",
         "People": _.map(this.applicants,
           function(applicant){return applicant.serialize();}),
@@ -608,6 +614,13 @@ angular.module('MAGI.services',[]).
         });
       });
 
+      if ("Application Year" in application) {
+        this.applicationYear = application["Application Year"];
+      }
+
+      if ("Application Date" in application) {
+        this.applicationDate = apiDateToUiDate(application["Application Date"]);
+      }
 
       this.state = _.find(states, function(st){
         return st.abbr == application["State"];

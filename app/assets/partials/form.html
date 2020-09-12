@@ -13,6 +13,10 @@
       <select selector ng-model="application.applicationYear" name="applicationYear" id="applicationYear" ng-options="year for year in appYears" required>
       </select>
     </div>
+    <div class="form-row">
+      <label for="applicationDate">Application date</label>
+      <input type="text" ng-model="application.applicationDate" name="applicationDate" id="applicationDate" required class="date" placeholder="mm / dd / yyyy" ui-mask="99 / 99 / 9999" />
+    </div>
   </div>
   <div id="submit_disabled_text" class="short-notice-area" ng-show="disableSubmit()">
     <h2 class="splash-header" style="text-align: center">SORRY!</h2>
