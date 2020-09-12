@@ -38,8 +38,8 @@ angular.module('MAGI.directives',[]).
       replace: true,
       transclude: 'element',
       link: function(scope, element, attrs) {
-        
-        attrs.$observe('id', function(value) {            
+
+        attrs.$observe('id', function(value) {
           element.attr('id','uniform-'+value);
         });
 
@@ -71,7 +71,7 @@ angular.module('MAGI.directives',[]).
     };
   }).
   directive('eligibility', function(){
-    return {        
+    return {
         template: "<span class='eligibility' ng-class='{ineligible:(value == \"N\"), eligible:(value==\"Y\")}'><i ng-class='{\"icon-remove\":(\"{{value}}\" == \"N\"), \"icon-ok\":(\"{{value}}\"==\"Y\")}'></i><span ng-show='value==\"N\"'>Not </span>{{program}} Eligible</span>",
         restrict: 'A',
         scope: {

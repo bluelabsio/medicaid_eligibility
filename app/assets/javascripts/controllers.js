@@ -2,10 +2,10 @@
 
 angular.module('MAGI.controllers', ['ngCookies']).
   controller('FormController',['$scope','$location','$anchorScroll','$timeout','$log','$filter','$cookies', '$cookieStore',
-    'filterFilter', 'Application','relationshipCodes','states','applicationYears','applicationStatuses', 
+    'filterFilter', 'Application','relationshipCodes','states','applicationYears','applicationStatuses',
     function($scope, $location, $anchorScroll, $timeout, $log, $filter, $cookies, $cookieStore, filterFilter, Application, relationshipCodes, states, applicationYears, applicationStatuses){
         var acceptedNoticeSession = false;
-        
+
         $scope.disableSubmit = function() {
           return gon.restrictStates && $scope.application.state && !(_.contains(gon.enabledStates, $scope.application.state.abbr));
         }
@@ -17,7 +17,7 @@ angular.module('MAGI.controllers', ['ngCookies']).
         $scope.application = Application;
 
         $scope.addTaxReturn = Application.addTaxReturn;
-        
+
         $scope.removeApplicant = function(app){
           $scope.application.removeApplicant(app);
         };
@@ -31,7 +31,7 @@ angular.module('MAGI.controllers', ['ngCookies']).
           if((navigator.userAgent.indexOf("MSIE") != -1 ) || (!!document.documentMode == true )) {
             $location.path("/exportraw");
           } else {
-            applicationJson = angular.toJson(Application.serialize(), true);
+            var applicationJson = angular.toJson(Application.serialize(), true);
 
             var a = window.document.createElement('a');
             a.href = window.URL.createObjectURL(new Blob([applicationJson], {type: 'application/json'}));
@@ -48,7 +48,7 @@ angular.module('MAGI.controllers', ['ngCookies']).
 
         $scope.$watch('newHousehold.length', function(newVal,oldVal){
           if(newVal > 0){
-            $scope.application.households.push([$scope.newHousehold.pop()]); 
+            $scope.application.households.push([$scope.newHousehold.pop()]);
           }
         });
 
@@ -83,17 +83,16 @@ angular.module('MAGI.controllers', ['ngCookies']).
             serv.then(function(resp){
                 $location.path("/results");
             }, function(err){
-             $scope.errorMessage = angular.fromJson(err)["data"]["Error"];             
+             $scope.errorMessage = angular.fromJson(err)["data"]["Error"];
             });
           } else {
             $scope.submitted = true;
             $timeout(
                 function(){
                   invalid_elements[0].focus( );
-            });              
+            });
           }
         };
-
 
         $scope.addApplicant = function(){
             Application.addApplicant("Applicant " + ($scope.applicants.length+1));
@@ -180,8 +179,16 @@ angular.module('MAGI.controllers', ['ngCookies']).
          applicant.updateWages();
         };
 
+        $scope.addWinning = function() {
+          $scope.applicant.incomeTaxes.qualifiedWinnings.push({Amount: 0, Date: ''})
+        }
+
+        $scope.removeWinning = function(index) {
+          $scope.applicant.incomeTaxes.qualifiedWinnings.splice(index, 1);
+        }
+
         $scope.notMe = function(other) {
-            return other !== $scope.applicant; 
+            return other !== $scope.applicant;
         };
     }]).
     controller('ResultsController',['$scope','$location','$filter','Application', function($scope,$location,$filter,Application){

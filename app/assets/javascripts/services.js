@@ -11,7 +11,7 @@ angular.module('MAGI.services',[]).
       });
       var today = new Date();
       if (($location.search()).year) {
-        this.applicationYear = parseInt(($location.search()).year);  
+        this.applicationYear = parseInt(($location.search()).year);
       } else if (today.getMonth() >= 3) {
         this.applicationYear = today.getFullYear();
       } else {
@@ -51,13 +51,14 @@ angular.module('MAGI.services',[]).
 
     function IncomeTaxes(){
       var me = this;
+      this.qualifiedWinnings = [];
     }
 
     IncomeTaxes.prototype.fields = [
-        {app: 'monthly',            api:'Monthly Income'},
-        {app: 'wages',              api:'Wages, Salaries, Tips'},
+        {app: 'monthly',            api: 'Monthly Income'},
+        {app: 'wages',              api: 'Wages, Salaries, Tips'},
         {app: 'taxableInterest',    api: 'Taxable Interest'},
-        {app: 'taxExemptInterest',  api:'Tax-Exempt Interest'},
+        {app: 'taxExemptInterest',  api: 'Tax-Exempt Interest'},
         {app: 'taxableRefunds',     api: 'Taxable Refunds, Credits, or Offsets of State and Local Income Taxes'},
         {app: 'alimony',            api: 'Alimony'},
         {app: 'capitalGains',       api: 'Capital Gain or Loss'},
@@ -65,8 +66,22 @@ angular.module('MAGI.services',[]).
         {app: 'farmIncome',         api: 'Farm Income or Loss'},
         {app: 'unemployment',       api: 'Unemployment Compensation'},
         {app: 'other',              api: 'Other Income'},
-        {app: 'MAGIDeductions',     api: 'MAGI Deductions'}
+        {app: 'MAGIDeductions',     api: 'MAGI Deductions'},
     ];
+
+    function uiDateToApiDate(date) {
+      var month = date.substring(0,2);
+      var day = date.substring(2,4);
+      var year = date.substring(4,8);
+      return year + "-" + month + "-" + day;
+    }
+
+    function apiDateToUiDate(date) {
+      var month = date.substring(5,7);
+      var day = date.substring(8,10);
+      var year = date.substring(0,4);
+      return month+day+year;
+    }
 
     IncomeTaxes.prototype.serialize = function(){
       var me = this;
@@ -74,14 +89,26 @@ angular.module('MAGI.services',[]).
         var val = me[field.app] ? me[field.app] : 0;
         return [field.api, val];
       });
+      if (this.qualifiedWinnings.length > 0) {
+        incomeData.push(["Qualified Winnings", _.map(
+          this.qualifiedWinnings, function(winning) {
+            return {Amount: winning.Amount, Date: uiDateToApiDate(winning.Date)}
+          }
+        )]);
+      }
       return _.object(incomeData);
     };
 
     IncomeTaxes.prototype.deserialize = function(obj){
       var me = this;
       angular.forEach(this.fields, function(field){
-        me[field.app] = obj[field.api];    
+        me[field.app] = obj[field.api];
       });
+      if ("Qualified Winnings" in obj) {
+        this.qualifiedWinnings = _.map(obj.qualifiedWinnings, function(winning) {
+          return {Amount: winning.Amount, Date: apiDateToUiDate(winning.Date)}
+        });
+      }
       return this;
     };
 
@@ -642,15 +669,15 @@ angular.module('MAGI.services',[]).
             }
 
             return {
-              item: item[0], 
+              item: item[0],
               indicator: indicator,
               code: item[1]["Ineligibility Code"],
               reason: item[1]["Ineligibility Reason"],
               hide: hide
             };
-          });          
+          });
         });
-        
+
         return response;
             }).error(function(error){
         $log.error(error);
